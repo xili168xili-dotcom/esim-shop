@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>eSIM 流量卡商城</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f6fa;
+            min-height: 100vh;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #4B74FB 0%, #6B8EFF 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .country-card {
+            transition: all 0.3s ease;
+        }
+        .country-card:active {
+            transform: scale(0.98);
+        }
+        .tab-active {
+            color: #4B74FB;
+            border-bottom: 2px solid #4B74FB;
+        }
+        .price-tag {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+        }
+        .search-input {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .search-input:focus {
+            background: rgba(255,255,255,0.25);
+            outline: none;
+        }
+        .badge-hot {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+        }
+        .badge-new {
+            background: linear-gradient(135deg, #4B74FB 0%, #6B8EFF 100%);
+        }
+        .bottom-nav {
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.95);
+        }
+        .nav-item.active {
+            color: #4B74FB;
+        }
+        .plan-card {
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .plan-card.selected {
+            border-color: #4B74FB;
+            background: rgba(75, 116, 251, 0.05);
+        }
+        .buy-btn {
+            background: linear-gradient(135deg, #4B74FB 0%, #6B8EFF 100%);
+            box-shadow: 0 4px 15px rgba(75, 116, 251, 0.4);
+        }
+        .buy-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body class="pb-20">
+    <!-- 顶部搜索栏 -->
+    <div class="gradient-bg sticky top-0 z-50">
+        <div class="px-4 py-3">
+            <div class="flex items-center gap-3">
+                <div class="flex-1 relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70"></i>
+                    <input type="text" 
+                           id="searchInput"
+                           placeholder="搜索国家或地区..." 
+                           class="search-input w-full py-2.5 pl-10 pr-4 rounded-full text-white placeholder-white/70 text-sm">
+                </div>
+                <button class="text-white p-2" onclick="showFilter()">
+                    <i class="fas fa-filter text-lg"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 分类标签 -->
+        <div class="flex px-4 pb-3 gap-6 overflow-x-auto no-scrollbar">
+            <button class="tab-btn tab-active text-white/90 text-sm font-medium whitespace-nowrap py-2" data-tab="all">全部</button>
+            <button class="tab-btn text-white/70 text-sm font-medium whitespace-nowrap py-2" data-tab="hot">🔥 热门</button>
+            <button class="tab-btn text-white/70 text-sm font-medium whitespace-nowrap py-2" data-tab="asia">亚洲</button>
+            <button class="tab-btn text-white/70 text-sm font-medium whitespace-nowrap py-2" data-tab="europe">欧洲</button>
+            <button class="tab-btn text-white/70 text-sm font-medium whitespace-nowrap py-2" data-tab="america">美洲</button>
+        </div>
+    </div>
+
+    <!-- 轮播 Banner -->
+    <div class="px-4 py-4">
+        <div class="gradient-bg rounded-2xl p-5 text-white relative overflow-hidden">
+            <div class="relative z-10">
+                <span class="badge-hot text-xs px-2 py-1 rounded-full text-white font-medium">限时优惠</span>
+                <h2 class="text-xl font-bold mt-2">全球 eSIM 流量卡</h2>
+                <p class="text-white/80 text-sm mt-1">覆盖 180+ 国家，即买即用</p>
+                <button class="mt-4 bg-white text-blue-600 px-5 py-2 rounded-full text-sm font-medium" onclick="scrollToCountries()">
+                    立即选购
+                </button>
+            </div>
+            <div class="absolute right-0 top-0 w-32 h-full opacity-20">
+                <i class="fas fa-globe text-8xl absolute -right-4 top-4"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快捷入口 -->
+    <div class="px-4 pb-4">
+        <div class="bg-white rounded-xl p-4 card-shadow">
+            <div class="grid grid-cols-4 gap-4">
+                <div class="text-center" onclick="filterByRegion('global')">
+                    <div class="w-12 h-12 mx-auto bg-blue-50 rounded-full flex items-center justify-center mb-2">
+                        <i class="fas fa-globe-americas text-blue-500 text-xl"></i>
+                    </div>
+                    <span class="text-xs text-gray-600">全球</span>
+                </div>
+                <div class="text-center" onclick="filterByRegion('multi')">
+                    <div class="w-12 h-12 mx-auto bg-green-50 rounded-full flex items-center justify-center mb-2">
+                        <i class="fas fa-map-marked-alt text-green-500 text-xl"></i>
+                    </div>
+                    <span class="text-xs text-gray-600">多地区</span>
+                </div>
+                <div class="text-center" onclick="showMyOrders()">
+                    <div class="w-12 h-12 mx-auto bg-purple-50 rounded-full flex items-center justify-center mb-2">
+                        <i class="fas fa-list-alt text-purple-500 text-xl"></i>
+                    </div>
+                    <span class="text-xs text-gray-600">我的订单</span>
+                </div>
+                <div class="text-center" onclick="showHelp()">
+                    <div class="w-12 h-12 mx-auto bg-orange-50 rounded-full flex items-center justify-center mb-2">
+                        <i class="fas fa-question-circle text-orange-500 text-xl"></i>
+                    </div>
+                    <span class="text-xs text-gray-600">帮助</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 国家/地区列表 -->
+    <div class="px-4" id="countriesSection">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-gray-800">热门目的地</h3>
+            <span class="text-xs text-gray-500">共 180+ 个国家</span>
+        </div>
+        
+        <div id="countriesList" class="space-y-3">
+            <!-- 动态生成国家卡片 -->
+        </div>
+    </div>
+
+    <!-- 套餐选择弹窗 -->
+    <div id="planModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-end">
+        <div class="bg-white w-full rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <img id="modalFlag" src="" class="w-10 h-10 rounded-full object-cover">
+                    <div>
+                        <h3 id="modalCountry" class="font-bold text-lg"></h3>
+                        <p class="text-xs text-gray-500">选择适合您的套餐</p>
+                    </div>
+                </div>
+                <button onclick="closePlanModal()" class="text-gray-400 p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="plansList" class="space-y-3 mb-6">
+                <!-- 动态生成套餐 -->
+            </div>
+            
+            <div class="border-t pt-4">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-gray-600">总计</span>
+                    <span id="totalPrice" class="text-2xl font-bold text-red-500">$0.00</span>
+                </div>
+                <button class="buy-btn w-full py-4 rounded-xl text-white font-bold text-lg" onclick="buyNow()">
+                    立即购买
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="bottom-nav fixed bottom-0 left-0 right-0 border-t border-gray-200 px-6 py-2 flex justify-around items-center">
+        <div class="nav-item active flex flex-col items-center py-2" onclick="switchTab('home')">
+            <i class="fas fa-home text-xl mb-1"></i>
+            <span class="text-xs">首页</span>
+        </div>
+        <div class="nav-item flex flex-col items-center py-2 text-gray-400" onclick="switchTab('orders')">
+            <i class="fas fa-shopping-bag text-xl mb-1"></i>
+            <span class="text-xs">订单</span>
+        </div>
+        <div class="nav-item flex flex-col items-center py-2 text-gray-400" onclick="switchTab('profile')">
+            <i class="fas fa-user text-xl mb-1"></i>
+            <span class="text-xs">我的</span>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        // 模拟国家数据
+        const countriesData = [
+            {
+                id: 'usa',
+                name: '美国',
+                nameEn: 'United States',
+                flag: '🇺🇸',
+                region: 'america',
+                isHot: true,
+                plans: [
+                    { id: 1, data: '1GB', days: 7, price: 4.50, originalPrice: 5.99 },
+                    { id: 2, data: '3GB', days: 15, price: 9.90, originalPrice: 12.99 },
+                    { id: 3, data: '5GB', days: 30, price: 14.90, originalPrice: 19.99 },
+                    { id: 4, data: '10GB', days: 30, price: 24.90, originalPrice: 32.99 },
+                ]
+            },
+            {
+                id: 'japan',
+                name: '日本',
+                nameEn: 'Japan',
+                flag: '🇯🇵',
+                region: 'asia',
+                isHot: true,
+                plans: [
+                    { id: 5, data: '1GB', days: 7, price: 3.90, originalPrice: 4.99 },
+                    { id: 6, data: '3GB', days: 15, price: 8.50, originalPrice: 10.99 },
+                    { id: 7, data: '5GB', days: 30, price: 12.90, originalPrice: 15.99 },
+                    { id: 8, data: '10GB', days: 30, price: 19.90, originalPrice: 25.99 },
+                ]
+            },
+            {
+                id: 'uk',
+                name: '英国',
+                nameEn: 'United Kingdom',
+                flag: '🇬🇧',
+                region: 'europe',
+                isHot: true,
+                plans: [
+                    { id: 9, data: '1GB', days: 7, price: 4.00, originalPrice: 4.99 },
+                    { id: 10, data: '3GB', days: 15, price: 8.90, originalPrice: 11.99 },
+                    { id: 11, data: '5GB', days: 30, price: 13.50, originalPrice: 16.99 },
+                    { id: 12, data: '10GB', days: 30, price: 21.90, originalPrice: 28.99 },
+                ]
+            },
+            {
+                id: 'thailand',
+                name: '泰国',
+                nameEn: 'Thailand',
+                flag: '🇹🇭',
+                region: 'asia',
+                isHot: false,
+                plans: [
+                    { id: 13, data: '1GB', days: 7, price: 2.90, originalPrice: 3.99 },
+                    { id: 14, data: '3GB', days: 15, price: 6.50, originalPrice: 8.99 },
+                    { id: 15, data: '5GB', days: 30, price: 9.90, originalPrice: 12.99 },
+                ]
+            },
+            {
+                id: 'singapore',
+                name: '新加坡',
+                nameEn: 'Singapore',
+                flag: '🇸🇬',
+                region: 'asia',
+                isHot: false,
+                plans: [
+                    { id: 16, data: '1GB', days: 7, price: 3.50, originalPrice: 4.50 },
+                    { id: 17, data: '3GB', days: 15, price: 7.90, originalPrice: 9.99 },
+                    { id: 18, data: '5GB', days: 30, price: 11.90, originalPrice: 14.99 },
+                ]
+            },
+            {
+                id: 'france',
+                name: '法国',
+                nameEn: 'France',
+                flag: '🇫🇷',
+                region: 'europe',
+                isHot: false,
+                plans: [
+                    { id: 19, data: '1GB', days: 7, price: 3.90, originalPrice: 4.99 },
+                    { id: 20, data: '3GB', days: 15, price: 8.50, originalPrice: 10.99 },
+                    { id: 21, data: '5GB', days: 30, price: 12.90, originalPrice: 16.99 },
+                ]
+            },
+            {
+                id: 'germany',
+                name: '德国',
+                nameEn: 'Germany',
+                flag: '🇩🇪',
+                region: 'europe',
+                isHot: false,
+                plans: [
+                    { id: 22, data: '1GB', days: 7, price: 3.90, originalPrice: 4.99 },
+                    { id: 23, data: '3GB', days: 15, price: 8.50, originalPrice: 10.99 },
+                    { id: 24, data: '5GB', days: 30, price: 12.90, originalPrice: 16.99 },
+                ]
+            },
+            {
+                id: 'korea',
+                name: '韩国',
+                nameEn: 'South Korea',
+                flag: '🇰🇷',
+                region: 'asia',
+                isHot: true,
+                plans: [
+                    { id: 25, data: '1GB', days: 7, price: 3.50, originalPrice: 4.50 },
+                    { id: 26, data: '3GB', days: 15, price: 7.90, originalPrice: 9.99 },
+                    { id: 27, data: '5GB', days: 30, price: 11.90, originalPrice: 14.99 },
+                ]
+            },
+        ];
+
+        let currentTab = 'all';
+        let selectedPlan = null;
+        let currentCountry = null;
+
+        // 渲染国家列表
+        function renderCountries(filter = 'all', search = '') {
+            const container = document.getElementById('countriesList');
+            let filtered = countriesData;
+
+            if (filter !== 'all') {
+                if (filter === 'hot') {
+                    filtered = countriesData.filter(c => c.isHot);
+                } else {
+                    filtered = countriesData.filter(c => c.region === filter);
+                }
+            }
+
+            if (search) {
+                filtered = filtered.filter(c => 
+                    c.name.includes(search) || 
+                    c.nameEn.toLowerCase().includes(search.toLowerCase())
+                );
+            }
+
+            container.innerHTML = filtered.map(country => `
+                <div class="country-card bg-white rounded-xl p-4 card-shadow cursor-pointer" onclick="showPlans('${country.id}')">
+                    <div class="flex items-center gap-4">
+                        <div class="text-4xl">${country.flag}</div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-bold text-gray-800">${country.name}</h4>
+                                ${country.isHot ? '<span class="badge-hot text-xs px-2 py-0.5 rounded text-white">HOT</span>' : ''}
+                            </div>
+                            <p class="text-xs text-gray-500 mt-0.5">${country.nameEn}</p>
+                            <div class="flex items-center gap-3 mt-2">
+                                <span class="text-xs text-gray-400">起</span>
+                                <span class="text-red-500 font-bold">$${country.plans[0].price.toFixed(2)}</span>
+                                <span class="text-xs text-gray-400 line-through">$${country.plans[0].originalPrice.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        <div class="text-gray-300">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 mt-3 pt-3 border-t border-gray-100">
+                        ${country.plans.slice(0, 3).map(plan => `
+                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">${plan.data}</span>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 显示套餐选择
+        function showPlans(countryId) {
+            const country = countriesData.find(c => c.id === countryId);
+            if (!country) return;
+
+            currentCountry = country;
+            selectedPlan = country.plans[0];
+
+            document.getElementById('modalFlag').textContent = country.flag;
+            document.getElementById('modalCountry').textContent = country.name;
+
+            const plansHtml = country.plans.map((plan, index) => `
+                <div class="plan-card ${index === 0 ? 'selected' : ''} bg-gray-50 rounded-xl p-4 cursor-pointer" 
+                     onclick="selectPlan(${plan.id}, this)">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-lg">${plan.data}</span>
+                                <span class="text-sm text-gray-500">/ ${plan.days}天</span>
+                            </div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-red-500 font-bold text-xl">$${plan.price.toFixed(2)}</span>
+                                <span class="text-xs text-gray-400 line-through">$${plan.originalPrice.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        <div class="w-6 h-6 rounded-full border-2 ${index === 0 ? 'border-blue-500 bg-blue-500' : 'border-gray-300'} flex items-center justify-center">
+                            ${index === 0 ? '<i class="fas fa-check text-white text-xs"></i>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('plansList').innerHTML = plansHtml;
+            updateTotal();
+
+            document.getElementById('planModal').classList.remove('hidden');
+        }
+
+        // 选择套餐
+        function selectPlan(planId, element) {
+            selectedPlan = currentCountry.plans.find(p => p.id === planId);
+            
+            document.querySelectorAll('.plan-card').forEach(card => {
+                card.classList.remove('selected');
+                const check = card.querySelector('.rounded-full');
+                check.className = 'w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center';
+                check.innerHTML = '';
+            });
+
+            element.classList.add('selected');
+            const check = element.querySelector('.rounded-full');
+            check.className = 'w-6 h-6 rounded-full border-2 border-blue-500 bg-blue-500 flex items-center justify-center';
+            check.innerHTML = '<i class="fas fa-check text-white text-xs"></i>';
+
+            updateTotal();
+        }
+
+        // 更新总价
+        function updateTotal() {
+            if (selectedPlan) {
+                document.getElementById('totalPrice').textContent = '$' + selectedPlan.price.toFixed(2);
+            }
+        }
+
+        // 关闭弹窗
+        function closePlanModal() {
+            document.getElementById('planModal').classList.add('hidden');
+        }
+
+        // 立即购买
+        function buyNow() {
+            if (!selectedPlan) {
+                tg.showAlert('请选择一个套餐');
+                return;
+            }
+
+            const orderData = {
+                country: currentCountry.name,
+                plan: selectedPlan.data,
+                days: selectedPlan.days,
+                price: selectedPlan.price
+            };
+
+            tg.showAlert(`订单确认\n\n${orderData.country}\n${orderData.plan} / ${orderData.days}天\n价格: $${orderData.price.toFixed(2)}\n\n点击确定继续支付`);
+            
+            // 这里可以调用支付 API
+            console.log('Order:', orderData);
+        }
+
+        // 标签切换
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('tab-active');
+                    b.classList.remove('text-white/90');
+                    b.classList.add('text-white/70');
+                });
+                this.classList.add('tab-active');
+                this.classList.add('text-white/90');
+                this.classList.remove('text-white/70');
+
+                currentTab = this.dataset.tab;
+                renderCountries(currentTab, document.getElementById('searchInput').value);
+            });
+        });
+
+        // 搜索功能
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            renderCountries(currentTab, e.target.value);
+        });
+
+        // 底部导航切换
+        function switchTab(tab) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                item.classList.add('text-gray-400');
+            });
+            event.currentTarget.classList.add('active');
+            event.currentTarget.classList.remove('text-gray-400');
+
+            if (tab === 'orders') {
+                tg.showAlert('订单功能开发中...');
+            } else if (tab === 'profile') {
+                tg.showAlert('个人中心功能开发中...');
+            }
+        }
+
+        // 其他功能
+        function showFilter() {
+            tg.showAlert('筛选功能开发中...');
+        }
+
+        function filterByRegion(region) {
+            renderCountries(region);
+        }
+
+        function showMyOrders() {
+            tg.showAlert('我的订单功能开发中...');
+        }
+
+        function showHelp() {
+            tg.showAlert('帮助中心功能开发中...');
+        }
+
+        function scrollToCountries() {
+            document.getElementById('countriesSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 点击遮罩关闭弹窗
+        document.getElementById('planModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePlanModal();
+            }
+        });
+
+        // 初始化
+        renderCountries();
+    </script>
+</body>
+</html>
